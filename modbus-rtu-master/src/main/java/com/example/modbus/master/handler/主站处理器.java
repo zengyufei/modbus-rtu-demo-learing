@@ -32,11 +32,15 @@ public class 主站处理器 extends SimpleChannelInboundHandler<ModbusRtu帧> {
 
     @Override
     public void channelActive(ChannelHandlerContext 上下文) {
-        System.out.println("Master connected to serial line, polling scheduler started.");
+        System.out.println("主站已接入串口链路，轮询调度已启动。");
         轮询任务 = 上下文.executor().scheduleWithFixedDelay(() -> 执行轮询节拍(上下文), 300, 轮询间隔毫秒, TimeUnit.MILLISECONDS);
     }
 
     @Override
+    /**
+     * 输入：从串口收到并已通过 CRC 校验的 ModbusRtu 响应帧。
+     * 输出：记录响应、结束当前在途请求，并把轮询推进到下一条命令。
+     */
     protected void channelRead0(ChannelHandlerContext 上下文, ModbusRtu帧 响应帧) {
         if (正在关闭) {
             return;
@@ -45,17 +49,17 @@ public class 主站处理器 extends SimpleChannelInboundHandler<ModbusRtu帧> {
         int 响应功能码 = 响应帧.功能码() & 0xFF;
         if ((响应功能码 & 0x80) != 0) {
             int 异常码 = 响应帧.数据区()[0] & 0xFF;
-            System.err.printf("Slave exception, function=0x%02X exception=0x%02X%n", 响应功能码, 异常码);
-            失败后推进轮询("slave exception");
+            System.err.printf("从站返回异常，功能码=0x%02X，异常码=0x%02X%n", 响应功能码, 异常码);
+            失败后推进轮询("从站异常响应");
             return;
         }
 
         if (当前请求 == null) {
-            System.err.printf("Unexpected response function=0x%02X without pending request.%n", 响应功能码);
+            System.err.printf("收到意外响应，功能码=0x%02X，但当前没有在途请求。%n", 响应功能码);
             return;
         }
         if (响应功能码 != 当前请求.命令.功能码) {
-            System.err.printf("Unexpected response function=0x%02X, expect=0x%02X%n", 响应功能码, 当前请求.命令.功能码);
+            System.err.printf("收到意外响应，功能码=0x%02X，期望=0x%02X%n", 响应功能码, 当前请求.命令.功能码);
             return;
         }
 
@@ -84,6 +88,10 @@ public class 主站处理器 extends SimpleChannelInboundHandler<ModbusRtu帧> {
         当前请求 = null;
     }
 
+    /**
+     * 输入：调度器的一个轮询节拍。
+     * 输出：如果当前总线空闲，则从轮询计划中取出一条命令并发送请求帧。
+     */
     private void 执行轮询节拍(ChannelHandlerContext 上下文) {
         if (正在关闭 || !上下文.channel().isActive() || 当前请求 != null) {
             return;
@@ -94,12 +102,16 @@ public class 主站处理器 extends SimpleChannelInboundHandler<ModbusRtu帧> {
         发送命令(上下文, 命令, false);
     }
 
+    /**
+     * 输入：一条逻辑轮询命令。
+     * 输出：编码成 Modbus RTU 请求帧并写入串口，同时启动响应超时计时。
+     */
     private void 发送命令(ChannelHandlerContext 上下文, 轮询命令 命令, boolean 是否重试) {
         上下文.writeAndFlush(new ModbusRtu帧(从站地址, 命令.功能码, 命令.数据区));
         if (是否重试) {
-            System.out.printf("Master retry #%d -> %s%n", 当前请求.重试次数, 命令.描述);
+            System.out.printf("主站重试第 %d 次 -> %s%n", 当前请求.重试次数, 命令.描述);
         } else {
-            System.out.printf("Master poll -> %s%n", 命令.描述);
+            System.out.printf("主站轮询 -> %s%n", 命令.描述);
         }
         安排超时任务(上下文);
     }
@@ -109,6 +121,10 @@ public class 主站处理器 extends SimpleChannelInboundHandler<ModbusRtu帧> {
         超时任务 = 上下文.executor().schedule(() -> 处理超时(上下文), 响应超时毫秒, TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * 输入：一次请求在超时窗口内没有等到合法响应帧。
+     * 输出：未达到重试上限时重发请求，达到上限时放弃当前命令并推进轮询。
+     */
     private void 处理超时(ChannelHandlerContext 上下文) {
         if (当前请求 == null || 正在关闭) {
             return;
@@ -119,7 +135,7 @@ public class 主站处理器 extends SimpleChannelInboundHandler<ModbusRtu帧> {
             return;
         }
 
-        System.err.printf("Master timeout -> %s, retries exhausted.%n", 当前请求.命令.描述);
+        System.err.printf("主站请求超时 -> %s，重试次数已耗尽。%n", 当前请求.命令.描述);
         当前请求 = null;
         当前轮询下标 = (当前轮询下标 + 1) % 轮询计划.size();
     }
@@ -127,17 +143,21 @@ public class 主站处理器 extends SimpleChannelInboundHandler<ModbusRtu帧> {
     private void 失败后推进轮询(String 原因) {
         取消超时任务();
         if (当前请求 != null) {
-            System.err.printf("Request failed: %s, command=%s%n", 原因, 当前请求.命令.描述);
+            System.err.printf("请求失败：原因=%s，命令=%s%n", 原因, 当前请求.命令.描述);
         }
         当前请求 = null;
         当前轮询下标 = (当前轮询下标 + 1) % 轮询计划.size();
     }
 
+    /**
+     * 输入：已经通过校验的响应帧。
+     * 输出：把不同功能码的响应内容格式化成中文日志，便于对照寄存器变化。
+     */
     private void 记录响应日志(ModbusRtu帧 响应帧) {
         int 响应功能码 = 响应帧.功能码() & 0xFF;
         if (响应功能码 == 0x03) {
             int 数据字节数 = 响应帧.数据区()[0] & 0xFF;
-            System.out.printf("Slave -> Read response byteCount=%d%n", 数据字节数);
+            System.out.printf("从站返回读寄存器响应，字节数=%d%n", 数据字节数);
             for (int 数据偏移 = 1; 数据偏移 < 数据字节数; 数据偏移 += 2) {
                 int 寄存器序号 = (数据偏移 - 1) / 2;
                 int 寄存器值 = ((响应帧.数据区()[数据偏移] & 0xFF) << 8) | (响应帧.数据区()[数据偏移 + 1] & 0xFF);
@@ -149,14 +169,14 @@ public class 主站处理器 extends SimpleChannelInboundHandler<ModbusRtu帧> {
         if (响应功能码 == 0x06) {
             int 地址 = ((响应帧.数据区()[0] & 0xFF) << 8) | (响应帧.数据区()[1] & 0xFF);
             int 数值 = ((响应帧.数据区()[2] & 0xFF) << 8) | (响应帧.数据区()[3] & 0xFF);
-            System.out.printf("Slave -> Write single confirmed address=%d value=%d%n", 地址, 数值);
+            System.out.printf("从站确认单写成功，地址=%d，数值=%d%n", 地址, 数值);
             return;
         }
 
         if (响应功能码 == 0x10) {
             int 起始地址 = ((响应帧.数据区()[0] & 0xFF) << 8) | (响应帧.数据区()[1] & 0xFF);
             int 数量 = ((响应帧.数据区()[2] & 0xFF) << 8) | (响应帧.数据区()[3] & 0xFF);
-            System.out.printf("Slave -> Write multiple confirmed start=%d quantity=%d%n", 起始地址, 数量);
+            System.out.printf("从站确认多写成功，起始地址=%d，数量=%d%n", 起始地址, 数量);
         }
     }
 

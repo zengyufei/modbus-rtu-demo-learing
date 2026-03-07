@@ -11,11 +11,15 @@ import io.netty.channel.embedded.EmbeddedChannel;
  * <p>建议阅读顺序：先看 README，再看协议文档，最后从这个入口进入代码。</p>
  */
 public class 主站程序 {
+    /**
+     * 输入：命令行参数中的串口名和波特率。
+     * 输出：启动串口桥接器和主站处理链，开始向总线发送轮询请求。
+     */
     public static void main(String[] 参数) throws Exception {
         String 串口名 = 参数.length > 0 ? 参数[0] : "COM5";
         int 波特率 = 参数.length > 1 ? Integer.parseInt(参数[1]) : 9600;
 
-        System.out.printf("Master open serial port %s baud=%d%n", 串口名, 波特率);
+        System.out.printf("主站打开串口 %s，波特率=%d%n", 串口名, 波特率);
 
         EmbeddedChannel 通道 = new EmbeddedChannel(
                 new ModbusRtu响应解码器(),

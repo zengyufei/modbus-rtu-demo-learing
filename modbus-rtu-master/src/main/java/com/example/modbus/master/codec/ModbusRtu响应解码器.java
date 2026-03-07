@@ -56,13 +56,17 @@ public class ModbusRtu响应解码器 extends ChannelInboundHandlerAdapter {
         super.exceptionCaught(上下文, 异常);
     }
 
+    /**
+     * 输入：串口持续送入的字节流缓冲区。
+     * 输出：从缓冲区中切出一帧或多帧完整 RTU 响应帧，并交给后续业务处理器。
+     */
     private void 解码帧(ChannelHandlerContext 上下文) {
         while (累积缓冲.readableBytes() >= 4) {
             byte 从站地址 = 累积缓冲.getByte(累积缓冲.readerIndex());
             byte 功能码 = 累积缓冲.getByte(累积缓冲.readerIndex() + 1);
             int 期望帧长度 = 计算期望长度(累积缓冲, 功能码);
             if (期望帧长度 == -1) {
-                throw new IllegalStateException("Unsupported function code: " + (功能码 & 0xFF));
+                throw new IllegalStateException("不支持的功能码: " + (功能码 & 0xFF));
             }
             if (期望帧长度 == Integer.MAX_VALUE || 累积缓冲.readableBytes() < 期望帧长度) {
                 break;
@@ -74,7 +78,7 @@ public class ModbusRtu响应解码器 extends ChannelInboundHandlerAdapter {
             int 期望CRC = ((完整帧[期望帧长度 - 1] & 0xFF) << 8) | (完整帧[期望帧长度 - 2] & 0xFF);
             int 实际CRC = ModbusCRC16计算器.计算(完整帧, 期望帧长度 - 2);
             if (期望CRC != 实际CRC) {
-                throw new IllegalStateException("CRC mismatch, expected=%04X actual=%04X".formatted(期望CRC, 实际CRC));
+                throw new IllegalStateException("CRC 不匹配，期望=%04X，实际=%04X".formatted(期望CRC, 实际CRC));
             }
 
             byte[] 数据区 = new byte[期望帧长度 - 4];
@@ -119,7 +123,7 @@ public class ModbusRtu响应解码器 extends ChannelInboundHandlerAdapter {
             byte[] 残留字节 = new byte[累积缓冲.readableBytes()];
             累积缓冲.readBytes(残留字节);
             累积缓冲.clear();
-            System.err.printf("Master decoder discarded partial RTU frame, reason=%s bytes=%s%n", 原因, 转十六进制(残留字节));
+            System.err.printf("主站解码器丢弃残缺 RTU 帧，原因=%s，字节=%s%n", 原因, 转十六进制(残留字节));
         }
     }
 
