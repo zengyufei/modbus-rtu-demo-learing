@@ -87,20 +87,57 @@ D:\cache\codex1
 - 主站：`COM5`
 - 从站：`COM6`
 
-### 运行命令
+### 一键运行脚本
+
+仓库根目录新增了 `scripts` 目录，里面同时提供了 `cmd` 和 PowerShell 两套脚本：
+
+- `scripts\一键运行-demo.cmd`
+- `scripts\一键运行-demo.ps1`
+- `scripts\run-master.cmd`
+- `scripts\run-slave.cmd`
+- `scripts\启动主站.cmd`
+- `scripts\启动主站.ps1`
+- `scripts\启动从站.cmd`
+- `scripts\启动从站.ps1`
+
+#### 方式一：双击 `.cmd`
+
+默认会按 `COM5 -> 主站`、`COM6 -> 从站`、`9600` 波特率启动：
+
+```cmd
+scripts\一键运行-demo.cmd
+```
+
+如果你要自定义串口和波特率：
+
+```cmd
+scripts\一键运行-demo.cmd COM5 COM6 9600
+```
+
+#### 方式二：PowerShell 一键运行
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\一键运行-demo.ps1
+```
+
+自定义参数：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\一键运行-demo.ps1 -主站串口 COM5 -从站串口 COM6 -波特率 9600
+```
+
+### 单独启动命令
 
 先启动从站：
 
 ```bash
-cd D:\cache\codex1\modbus-rtu-slave
-java -jar target/modbus-rtu-slave-1.0-SNAPSHOT-jar-with-dependencies.jar COM6 9600
+scripts\启动从站.cmd COM6 9600
 ```
 
 再启动主站：
 
 ```bash
-cd D:\cache\codex1\modbus-rtu-master
-java -jar target/modbus-rtu-master-1.0-SNAPSHOT-jar-with-dependencies.jar COM5 9600
+scripts\启动主站.cmd COM5 9600
 ```
 
 ## 文档索引
