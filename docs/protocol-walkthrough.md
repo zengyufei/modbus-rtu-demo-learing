@@ -256,11 +256,11 @@
 
 建议按下面顺序对照：
 
-1. 看主站轮询逻辑：`modbus-rtu-master/src/main/java/com/example/modbus/master/handler/MasterHandler.java`
-2. 看从站功能码处理：`modbus-rtu-slave/src/main/java/com/example/modbus/slave/handler/SlaveHandler.java`
-3. 看主站响应解码：`modbus-rtu-master/src/main/java/com/example/modbus/master/codec/ModbusRtuResponseDecoder.java`
-4. 看从站请求解码：`modbus-rtu-slave/src/main/java/com/example/modbus/slave/codec/ModbusRtuRequestDecoder.java`
-5. 看 CRC 计算：`Crc16Modbus.java`
+1. 看主站轮询逻辑：`modbus-rtu-master/src/main/java/com/example/modbus/master/handler/主站处理器.java`
+2. 看从站功能码处理：`modbus-rtu-slave/src/main/java/com/example/modbus/slave/handler/从站处理器.java`
+3. 看主站响应解码：`modbus-rtu-master/src/main/java/com/example/modbus/master/codec/ModbusRtu响应解码器.java`
+4. 看从站请求解码：`modbus-rtu-slave/src/main/java/com/example/modbus/slave/codec/ModbusRtu请求解码器.java`
+5. 看 CRC 计算：`ModbusCRC16计算器.java`
 
 如果你想继续练手，下一步最值得做的是：
 

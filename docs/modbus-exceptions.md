@@ -104,7 +104,7 @@ Modbus 异常响应格式：
 
 最直接的方式是修改：
 
-- `modbus-rtu-master/src/main/java/com/example/modbus/master/handler/MasterHandler.java`
+- `modbus-rtu-master/src/main/java/com/example/modbus/master/handler/主站处理器.java`
 
 在 `pollPlan` 里加一个自定义非法功能码命令，或者临时把某个功能码改成 `0x45`。
 

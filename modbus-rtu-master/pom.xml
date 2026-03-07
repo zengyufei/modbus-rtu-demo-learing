@@ -37,7 +37,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.example.modbus.master.MasterApplication</mainClass>
+                            <mainClass>com.example.modbus.master.主站程序</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

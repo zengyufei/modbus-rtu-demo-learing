@@ -37,7 +37,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.example.modbus.slave.SlaveApplication</mainClass>
+                            <mainClass>com.example.modbus.slave.从站程序</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

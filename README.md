@@ -36,21 +36,21 @@ D:\cache\codex1
 
 ### 第一步：先看启动入口
 
-- 主站入口：`modbus-rtu-master/src/main/java/com/example/modbus/master/MasterApplication.java`
-- 从站入口：`modbus-rtu-slave/src/main/java/com/example/modbus/slave/SlaveApplication.java`
+- 主站入口：`modbus-rtu-master/src/main/java/com/example/modbus/master/主站程序.java`
+- 从站入口：`modbus-rtu-slave/src/main/java/com/example/modbus/slave/从站程序.java`
 
 ### 第二步：再看主从业务逻辑
 
-- 主站轮询逻辑：`modbus-rtu-master/src/main/java/com/example/modbus/master/handler/MasterHandler.java`
-- 从站业务逻辑：`modbus-rtu-slave/src/main/java/com/example/modbus/slave/handler/SlaveHandler.java`
+- 主站轮询逻辑：`modbus-rtu-master/src/main/java/com/example/modbus/master/handler/主站处理器.java`
+- 从站业务逻辑：`modbus-rtu-slave/src/main/java/com/example/modbus/slave/handler/从站处理器.java`
 
 ### 第三步：最后看协议细节
 
-- 主站响应解码：`modbus-rtu-master/src/main/java/com/example/modbus/master/codec/ModbusRtuResponseDecoder.java`
-- 从站请求解码：`modbus-rtu-slave/src/main/java/com/example/modbus/slave/codec/ModbusRtuRequestDecoder.java`
-- 主从编码器：`ModbusRtuEncoder.java`
-- CRC：`Crc16Modbus.java`
-- 串口桥接：`SerialPortNettyBridge.java`
+- 主站响应解码：`modbus-rtu-master/src/main/java/com/example/modbus/master/codec/ModbusRtu响应解码器.java`
+- 从站请求解码：`modbus-rtu-slave/src/main/java/com/example/modbus/slave/codec/ModbusRtu请求解码器.java`
+- 主从编码器：`ModbusRtu编码器.java`
+- CRC：`ModbusCRC16计算器.java`
+- 串口桥接：`串口Netty桥接器.java`
 
 ## 本 demo 实现了什么
 
