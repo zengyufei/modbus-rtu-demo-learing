@@ -87,6 +87,126 @@ D:\cache\codex1
 - 主站：`COM5`
 - 从站：`COM6`
 
+### com0com 安装步骤
+
+如果你的电脑上还没有可互通的虚拟串口，可以先安装 `com0com`。
+
+#### 第一步：安装 com0com
+
+1. 运行 com0com 安装包：
+   - `com0com-setup.exe`
+2. 安装完成后，系统里通常会先生成一对默认端口：
+   - `CNCA0`
+   - `CNCB0`
+3. 安装完成后，可以用 PowerShell 确认当前串口列表：
+
+```powershell
+Get-CimInstance Win32_SerialPort | Select-Object DeviceID, Name
+```
+
+如果安装成功，你一般会看到类似：
+
+```text
+COM1     通信端口 (COM1)
+COM3     蓝牙链接上的标准串行 (COM3)
+COM4     蓝牙链接上的标准串行 (COM4)
+CNCA0    com0com - serial port emulator
+CNCB0    com0com - serial port emulator
+```
+
+### 把虚拟串口改成 COM5 和 COM6
+
+本 demo 默认按：
+
+- 主站：`COM5`
+- 从站：`COM6`
+
+来启动，所以建议把 `CNCA0/CNCB0` 改成 `COM5/COM6`。
+
+#### 第二步：确认 COM5 和 COM6 没有被占用
+
+必须使用 powershell， 不能使用 cmd。
+
+先执行：
+
+```powershell
+Get-CimInstance Win32_SerialPort | Select-Object DeviceID, Name
+```
+
+如果你已经有真实设备占用了 `COM5` 或 `COM6`，就不要继续用这两个号，应该换成别的空闲端口。
+
+#### 第三步：进入 com0com 安装目录
+
+```powershell
+Set-Location "C:\Program Files (x86)\com0com"
+```
+
+如果你的安装目录不同，以实际安装路径为准。
+
+#### 第四步：查看当前虚拟串口对
+
+```powershell
+.\setupc.exe list
+       CNCA0 PortName=CNCA0
+       CNCB0 PortName=CNCB0
+```
+
+#### 第五步：把端口名改成 COM5 和 COM6
+
+注意：在 PowerShell 里，直接执行带参数的 `.exe` 时，前面可以加 `&`，也可以用 `.\` 方式执行。下面两种写法都可以。
+
+写法一：
+
+```powershell
+.\setupc.exe change CNCA0 PortName=COM5
+.\setupc.exe change CNCB0 PortName=COM6
+```
+如果有任何提示，选择继续就行。
+
+写法二：
+
+```powershell
+& .\setupc.exe change CNCA0 PortName=COM5
+& .\setupc.exe change CNCB0 PortName=COM6
+```
+
+如果你的默认端口名不是 `CNCA0/CNCB0`，把它替换成你 `list` 里看到的名字。
+
+#### 第六步：再次确认结果
+
+```powershell
+Get-CimInstance Win32_SerialPort | Select-Object DeviceID, Name
+```
+
+你应该能看到类似：
+
+```text
+COM5     com0com - serial port emulator
+COM6     com0com - serial port emulator
+```
+
+### 如果 setupc.exe 报找不到 com0com.inf
+
+如果你看到类似错误：
+
+```text
+setup for com0com setupgetinfinformation(c:\users\...\com0com.inf) ERROR: 0x00000002
+```
+
+通常说明：
+
+1. 你没有在 `com0com` 安装目录里运行 `setupc.exe`
+2. 当前安装不完整，目录里缺少 `com0com.inf`
+
+正确做法是先进入安装目录再执行：
+
+```powershell
+Set-Location "C:\Program Files (x86)\com0com"
+.\setupc.exe list
+```
+
+如果目录里根本没有 `com0com.inf`，建议重新安装。
+
 ### 一键运行脚本
 
 仓库根目录新增了 `scripts` 目录，里面同时提供了 `cmd` 和 PowerShell 两套脚本：
